@@ -102,10 +102,11 @@
                 <button onclick="switchTab('apps')" id="tab-apps" class="tab-btn text-xs font-bold px-4 py-1.5 rounded-full transition bg-white text-[#3B0764] shadow-sm">
                     <i class="fa-solid fa-house mr-1"></i>หน้าแรก
                 </button>
-                <button onclick="switchTab('kpi-result')" id="tab-kpi-result" class="tab-btn text-xs font-bold px-4 py-1.5 rounded-full transition text-white/80 hover:bg-white/10">
+                <!-- ซ่อนไว้: เลิกใช้ ย้ายไปใช้ระบบ KPI SAR ของ รพ. แทน (โค้ด/ข้อมูลยังอยู่ครบ ลบ hidden ออกเพื่อเปิดกลับ) -->
+                <button onclick="switchTab('kpi-result')" id="tab-kpi-result" class="hidden tab-btn text-xs font-bold px-4 py-1.5 rounded-full transition text-white/80 hover:bg-white/10">
                     <i class="fa-solid fa-chart-pie mr-1"></i>ผลลัพธ์ KPI
                 </button>
-                <button onclick="switchTab('kpi-admin')" id="tab-kpi-admin" class="tab-btn text-xs font-bold px-4 py-1.5 rounded-full transition text-white/80 hover:bg-white/10">
+                <button onclick="switchTab('kpi-admin')" id="tab-kpi-admin" class="hidden tab-btn text-xs font-bold px-4 py-1.5 rounded-full transition text-white/80 hover:bg-white/10">
                     <i class="fa-solid fa-clipboard-list mr-1"></i>จัดการ/ติดตาม KPI
                 </button>
             </nav>
