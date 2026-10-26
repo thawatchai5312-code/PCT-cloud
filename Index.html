@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>PCT Cloud</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400..700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+
+    <style>
+        html {
+            font-size: 100%; 
+        }
+
+        body {
+            font-family: 'Google Sans', 'Noto Sans Thai', sans-serif;
+            background: #FFFFFF;
+            min-height: 100vh;
+        }
+        .circle-icon {
+            border-radius: 50%;
+            width: 75px;
+            height: 75px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 16px -3px rgba(0, 0, 0, 0.15);
+        }
+        .app-card:hover .circle-icon {
+            transform: scale(1.08) rotate(3deg);
+        }
+        .tab-btn {
+            transition: all 0.2s ease;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #64748b;
+            border-radius: 10px;
+        }
+        
+        /* สไตล์ตารางสำหรับจัดการ KPI */
+        .kpi-table-input {
+            width: 100%; 
+            min-width: 60px;
+            padding: 12px 4px; /* เพิ่มพื้นที่ขอบบนและล่างแถวตารางแก้ไขตัวชขี้วัด */
+            border: 1px solid transparent;
+            background: transparent;
+            font-size: 11px;
+            line-height: 1.5; /* เพิ่มระยะห่างระหว่างบรรทัดสำหรับภาษาไทย */
+            border-radius: 8px;
+        }
+        .kpi-table-input:focus {
+            border: 1px solid #4f46e5;
+            background: #fff;
+            outline: none;
+        }
+        .kpi-table th { 
+            white-space: nowrap; 
+        }
+        
+        /* เพิ่มความสูงของแถวในตารางจัดการ KPI */
+        .kpi-table tbody tr {
+            height: 70px; /* สามารถเปลี่ยนตัวเลข 80px เป็น 60px หรือ 100px ได้ตามต้องการ */
+        }
+    </style>
+</head>
+<body class="p-3 pt-0 md:p-5 md:pt-0">
+
+    <div class="max-w-[98%] mx-auto pb-10">
+        <header class="mb-4 rounded-2xl overflow-hidden shadow-sm">
+            <div class="w-full relative flex items-center justify-center bg-[#3B0764] px-4 py-2.5">
+                <div class="flex items-center gap-2">
+                    <div class="w-9 h-9 rounded-xl bg-white flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-cloud text-xl" style="color:#DB2777"></i>
+                    </div>
+                    <div class="leading-tight">
+                        <span class="text-sm font-bold text-white">PCT Cloud</span>
+                        <span class="text-[11px] font-medium text-white/70 ml-1">· โรงพยาบาลภูหลวง จังหวัดเลย</span>
+                    </div>
+                </div>
+
+                <button id="btn-settings-header" onclick="switchTab('settings')" class="absolute right-4 shrink-0 text-white/70 hover:text-white transition hidden" title="ตั้งค่า">
+                    <i class="fa-solid fa-gear text-base"></i>
+                </button>
+            </div>
+
+            <nav class="w-full flex items-center gap-1.5 flex-wrap justify-center bg-[#7C3AED] px-3 py-2">
+                <button onclick="switchTab('apps')" id="tab-apps" class="tab-btn text-xs font-bold px-4 py-1.5 rounded-full transition bg-white text-[#3B0764] shadow-sm">
+                    <i class="fa-solid fa-house mr-1"></i>หน้าแรก
+                </button>
+                <button onclick="switchTab('kpi-result')" id="tab-kpi-result" class="tab-btn text-xs font-bold px-4 py-1.5 rounded-full transition text-white/80 hover:bg-white/10">
+                    <i class="fa-solid fa-chart-pie mr-1"></i>ผลลัพธ์ KPI
+                </button>
+                <button onclick="switchTab('kpi-admin')" id="tab-kpi-admin" class="tab-btn text-xs font-bold px-4 py-1.5 rounded-full transition text-white/80 hover:bg-white/10">
+                    <i class="fa-solid fa-clipboard-list mr-1"></i>จัดการ/ติดตาม KPI
+                </button>
+            </nav>
+        </header>
+
+        <section id="section-apps" class="tab-content block">
+            <div class="bg-white p-4 rounded-2xl shadow-md border border-slate-200 mb-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b-2 border-slate-200">
+                    <h2 class="text-lg font-bold text-slate-900"><i class="fa-solid fa-paste text-violet-900 mr-2"></i>ระบบบอร์ดสารสนเทศและแนวทางเวชปฏิบัติ</h2>
+                    <button onclick="openAdminSecurity('open')" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-full text-xs font-bold transition shadow-md">
+                        <i class="fa-solid fa-lock mr-1"></i>จัดการบอร์ดประกาศ (Admin)
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <div class="md:col-span-4 bg-white p-3 rounded-2xl border border-slate-200 shadow-md">
+                    <div class="mb-3 pb-2 border-b">
+                        <h3 class="font-bold text-sm text-violet-950"><i class="fa-solid fa-th-large mr-1 text-violet-700"></i>ระบบงานย่อย</h3>
+                    </div>
+                    <div class="space-y-2" id="apps-container">
+                        <div onclick="openAppSecurity('https://script.google.com/macros/s/AKfycbz2cnku_sq9GzB0XUfRK78eGMJcanwsK00wukIfTRydAVG7n85u9pBA2tn0semm6YKTJg/exec', 'Hemoculture')"
+                             class="app-card w-full flex items-center gap-3 p-2.5 rounded-2xl bg-white hover:bg-rose-50/60 border border-slate-200 hover:border-rose-300 hover:shadow-md cursor-pointer transition">
+                            <div class="circle-icon bg-rose-300 text-rose-950 text-base shrink-0" style="width:38px;height:38px;">
+                                <i class="fa-solid fa-microscope"></i>
+                            </div>
+                            <div class="min-w-0 text-left flex-1">
+                                <h3 class="font-bold text-xs text-slate-800 truncate">Culture&Sensitivity</h3>
+                                <p class="text-[10px] text-slate-500 font-medium truncate">Culture report management</p>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-slate-300 text-xs shrink-0"></i>
+                        </div>
+
+                        <!-- การ์ด ANC smart care ที่เพิ่มใหม่ -->
+                        <div onclick="openAppSecurity('https://script.google.com/macros/s/AKfycbyz3GvtN5ISsV5-MgyGb4b5R0qyzMDm_hJTMkTW60FhbnQra5rbLB-Li43_hhuGRrp3tw/exec', 'ANC smart care')"
+                             class="app-card w-full flex items-center gap-3 p-2.5 rounded-2xl bg-white hover:bg-pink-50/60 border border-slate-200 hover:border-pink-300 hover:shadow-md cursor-pointer transition">
+                            <div class="circle-icon bg-pink-300 text-pink-950 text-base shrink-0" style="width:38px;height:38px;">
+                                <i class="fa-solid fa-person-pregnant"></i>
+                            </div>
+                            <div class="min-w-0 text-left flex-1">
+                                <h3 class="font-bold text-xs text-slate-800 truncate">ANC smart care</h3>
+                                <p class="text-[10px] text-slate-500 font-medium truncate">ANC Phuluang hospital smart care</p>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-slate-300 text-xs shrink-0"></i>
+                        </div>
+
+                        <div onclick="openAppSecurity('https://script.google.com/macros/s/AKfycbx2fTkckwAjhS83ivWYFhEHQK-ar2VU2Mv8twH5yvNbQUhTA34IAtbMlhl33JCIVq4j/exec', 'Doctor Activities')"
+                             class="app-card w-full flex items-center gap-3 p-2.5 rounded-2xl bg-white hover:bg-indigo-50/60 border border-slate-200 hover:border-indigo-300 hover:shadow-md cursor-pointer transition">
+                            <div class="circle-icon bg-indigo-300 text-indigo-950 text-base shrink-0" style="width:38px;height:38px;">
+                                <i class="fa-solid fa-user-doctor"></i>
+                            </div>
+                            <div class="min-w-0 text-left flex-1">
+                                <h3 class="font-bold text-xs text-slate-800 truncate">Doctor Activities</h3>
+                                <p class="text-[10px] text-slate-500 font-medium truncate">Doctor activity and schedules</p>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-slate-300 text-xs shrink-0"></i>
+                        </div>
+
+                        <div onclick="openAppSecurity('https://script.google.com/macros/s/AKfycbzuT2u3T3x8aa97LafoiXMtgSPzYlXMbXJ8UPLF_JXZjzdcleH6xGXMcEk4KQb7xTtaDQ/exec', 'KPI SAR')"
+                             class="app-card w-full flex items-center gap-3 p-2.5 rounded-2xl bg-white hover:bg-emerald-50/60 border border-slate-200 hover:border-emerald-300 hover:shadow-md cursor-pointer transition">
+                            <div class="circle-icon bg-emerald-300 text-emerald-950 text-base shrink-0" style="width:38px;height:38px;">
+                                <i class="fa-solid fa-chart-pie"></i>
+                            </div>
+                            <div class="min-w-0 text-left flex-1">
+                                <h3 class="font-bold text-xs text-slate-800 truncate">KPI SAR</h3>
+                                <p class="text-[10px] text-slate-500 font-medium truncate">KPI monitoring system</p>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-slate-300 text-xs shrink-0"></i>
+                        </div>
+
+                        <div class="w-full flex items-center gap-2 p-2.5 rounded-2xl border border-dashed border-violet-400 text-violet-900 justify-center hover:bg-violet-50/50 cursor-pointer transition">
+                            <i class="fa-solid fa-plus"></i>
+                            <span class="text-xs font-bold">เพิ่มเว็บแอปในอนาคต</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="md:col-span-8 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-violet-100 p-3 rounded-2xl border border-violet-300 shadow-inner">
+                        <div class="flex justify-between items-center gap-2 mb-3">
+                            <h3 class="font-bold text-sm text-violet-950 flex items-center">
+                                <span class="bg-violet-900 text-white w-5 h-5 rounded-full inline-flex items-center justify-center text-[11px] mr-1.5">1</span>
+                                หมวดประกาศข่าวสาร
+                            </h3>
+                            <select id="filter-news-type" onchange="filterData()" class="text-[11px] border border-slate-200 p-1 rounded-xl bg-white focus:outline-none focus:border-violet-900 font-bold text-slate-700"></select>
+                        </div>
+                        <div id="news-sub-list" class="space-y-3"></div>
+                    </div>
+
+                    <div class="bg-pink-100 p-3 rounded-2xl border border-pink-300 shadow-inner">
+                        <div class="flex justify-between items-center gap-2 mb-3">
+                            <h3 class="font-bold text-sm text-pink-950 flex items-center">
+                                <span class="bg-pink-900 text-white w-5 h-5 rounded-full inline-flex items-center justify-center text-[11px] mr-1.5">2</span>
+                                หมวดหมู่ความรู้ CPG
+                            </h3>
+                            <select id="filter-cpg-dept" onchange="filterData()" class="text-[11px] border border-slate-200 p-1 rounded-xl bg-white focus:outline-none focus:border-pink-900 font-bold text-slate-700"></select>
+                        </div>
+                        <div id="cpg-sub-list" class="space-y-3"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- แท็บ 3: ผลลัพธ์ KPI -->
+        <section id="section-kpi-result" class="tab-content hidden">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <div class="md:col-span-4 bg-white p-3 rounded-2xl border border-slate-200 shadow-md">
+                    <div class="mb-3 pb-2 border-b">
+                        <h3 class="font-bold text-sm text-violet-950"><i class="fa-solid fa-list-check mr-1 text-violet-700"></i>กลุ่มโรค & ตัวชี้วัด</h3>
+                    </div>
+                    <div id="kpi-result-accordion" class="space-y-2">
+                        <p class="text-center text-slate-400 text-xs py-4 animate-pulse">กำลังโหลดตัวชี้วัด...</p>
+                    </div>
+                </div>
+
+                <div class="md:col-span-8 bg-white p-4 rounded-2xl border border-slate-200 shadow-md" id="kpi-view-panel">
+                    <div class="flex flex-col items-center justify-center py-10 text-slate-400 text-center" id="kpi-empty-state">
+                        <div class="circle-icon bg-violet-50 text-violet-400 text-2xl mb-2" style="width: 55px; height: 55px;">
+                            <i class="fa-solid fa-chart-simple"></i>
+                        </div>
+                        <p class="font-semibold text-xs">กรุณาเลือกตัวชี้วัดจากแถบกลุ่มโรคด้านซ้ายมือ<br>เพื่อเรียกดูข้อมูลผลการดำเนินงาน</p>
+                    </div>
+
+                    <div id="kpi-content-data" class="hidden space-y-4">
+                        <div class="border-b pb-2">
+                            <span id="view-kpi-group" class="text-[9px] font-bold bg-violet-100 text-violet-800 px-2 py-0.5 rounded-full">กลุ่มโรค</span>
+                            <h3 id="view-kpi-title" class="font-bold text-sm text-slate-900 mt-1">ชื่อตัวชี้วัด</h3>
+                            <p class="text-xs font-bold text-emerald-700 mt-0.5">เป้าหมายตัวชี้วัด: <span id="view-kpi-target">-</span> | ผู้รับผิดชอบ: <span id="view-kpi-resp" class="text-indigo-600">-</span></p>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-700 mb-1"><i class="fa-solid fa-chart-bar text-violet-600 mr-1"></i>แผนภูมิข้อมูลรายปีงบประมาณ</h4>
+                            <div class="relative w-full bg-slate-50 p-2 rounded-xl border" style="height: 250px;">
+                                <canvas id="kpiBarChart"></canvas>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-700 mb-1"><i class="fa-solid fa-table text-violet-600 mr-1"></i>ผลงานจำแนกรายไตรมาส (ปีปัจจุบัน)</h4>
+                            <div class="overflow-x-auto rounded-xl border">
+                                <table class="w-full text-left text-xs text-slate-600">
+                                    <thead class="bg-slate-100 text-slate-700 font-bold text-[11px]">
+                                        <tr>
+                                            <th class="p-2 border-r text-center">ไตรมาส 1</th>
+                                            <th class="p-2 border-r text-center">ไตรมาส 2</th>
+                                            <th class="p-2 border-r text-center">ไตรมาส 3</th>
+                                            <th class="p-2 text-center">ไตรมาส 4</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="bg-white border-t font-semibold text-center text-slate-900">
+                                            <td id="view-kpi-q1" class="p-2 border-r">-</td>
+                                            <td id="view-kpi-q2" class="p-2 border-r">-</td>
+                                            <td id="view-kpi-q3" class="p-2 border-r">-</td>
+                                            <td id="view-kpi-q4" class="p-2">-</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            <div class="bg-amber-50/70 p-2.5 rounded-xl border border-amber-200">
+                                <h4 class="text-[11px] font-bold text-amber-900 mb-0.5"><i class="fa-solid fa-file-invoice text-amber-700 mr-1"></i>คำอธิบาย Template ตัวชี้วัด</h4>
+                                <p id="view-kpi-template" class="text-slate-700 text-xs whitespace-pre-line leading-relaxed">-</p>
+                            </div>
+                            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                                <h4 class="text-[11px] font-bold text-slate-700 mb-0.5"><i class="fa-solid fa-database text-slate-600 mr-1"></i>แหล่งที่มา / นิยาม</h4>
+                                <p id="view-kpi-source" class="text-slate-600 text-xs font-medium">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- แท็บ 4: จัดการ/ติดตาม KPI (รวม 2 มุมมองย่อยไว้ในแท็บเดียว เพราะทั้งคู่ต้อง login) -->
+        <section id="section-kpi-admin" class="tab-content hidden">
+            <div class="flex items-center gap-2 mb-4">
+                <button id="subtab-kpi-manage" onclick="switchKpiSub('manage')" class="text-xs font-bold px-4 py-1.5 rounded-full transition bg-violet-600 text-white shadow-sm">
+                    <i class="fa-solid fa-sliders mr-1"></i>จัดการข้อมูล
+                </button>
+                <button id="subtab-kpi-track" onclick="switchKpiSub('track')" class="text-xs font-bold px-4 py-1.5 rounded-full transition bg-slate-100 text-slate-600 hover:bg-slate-200">
+                    <i class="fa-solid fa-list-check mr-1"></i>ติดตามสถานะ
+                </button>
+            </div>
+
+        <div id="section-kpi-manage" class="kpi-sub-content hidden">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <div class="md:col-span-3 bg-white p-3 rounded-2xl border border-slate-200 shadow-md">
+                    <div class="flex justify-between items-center mb-3 pb-2 border-b">
+                        <h3 class="font-bold text-sm text-violet-950"><i class="fa-solid fa-folder-tree mr-1 text-violet-700"></i>เลือกกลุ่มโรค</h3>
+                        <button onclick="openAdminSecurity('kpi_admin')" class="bg-[#D97706] hover:bg-[#B45309] text-white text-[10px] px-2 py-1 rounded-full font-bold shadow-md">
+                            <i class="fa-solid fa-plus mr-1"></i>เพิ่ม KPI ใหม่
+                        </button>
+                    </div>
+                    <div id="kpi-manage-accordion" class="space-y-2"></div>
+                </div>
+
+                <div class="md:col-span-9 bg-white p-4 rounded-2xl border border-slate-200 shadow-md">
+                    <h3 class="font-bold text-sm text-slate-800 mb-3" id="manage-table-title"><i class="fa-solid fa-table mr-2 text-violet-600"></i>ตารางจัดการข้อมูล (เลือกกลุ่มโรคเพื่อแก้ไข)</h3>
+                    <div class="overflow-x-auto border rounded-xl" id="manage-table-container">
+                        <div class="p-10 text-center text-slate-400 text-xs">คลิกเลือกกลุ่มโรคทางซ้ายมือ เพื่อโหลดตารางข้อมูล</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="section-kpi-track" class="kpi-sub-content hidden">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-md">
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-3 mb-4 pb-2 border-b-2 border-slate-100">
+                    <h3 class="font-bold text-base text-slate-800"><i class="fa-solid fa-clipboard-list mr-2 text-[#D97706]"></i>ติดตามสถานะการลงข้อมูล KPI</h3>
+                    <div class="relative w-full sm:w-64">
+                        <input type="text" id="kpi-search-input" onkeyup="renderKpiTrackTable()" placeholder="ค้นหาชื่อ, กลุ่มโรค, ผู้รับผิดชอบ..." class="w-full border border-slate-200 rounded-full py-1.5 pl-3 pr-8 text-xs focus:outline-none focus:border-rose-500">
+                        <i class="fa-solid fa-magnifying-glass absolute right-3 top-2 text-slate-400 text-xs"></i>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-100 text-slate-700 font-bold text-[11px]">
+                            <tr>
+                                <th class="p-3 border-b">กลุ่มโรค</th>
+                                <th class="p-3 border-b">ชื่อตัวชี้วัด</th>
+                                <th class="p-3 border-b">ผู้รับผิดชอบ</th>
+                                <th class="p-3 border-b">สถานะข้อมูล</th>
+                                <th class="p-3 border-b text-center">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="kpi-track-list" class="divide-y divide-slate-100">
+                            <!-- Data fills here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        </section>
+    </div>
+
+    
+        <!-- แท็บ 6: ตั้งค่าระบบ (Admin) -->
+        <section id="section-settings" class="tab-content hidden">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-md max-w-4xl mx-auto">
+                <div class="flex items-center gap-3 mb-4 pb-2 border-b-2 border-slate-100">
+                    <h3 class="font-bold text-base text-slate-800"><i class="fa-solid fa-gear mr-2 text-slate-700"></i>ตั้งค่าผู้ใช้งานระบบ (Admin)</h3>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="border rounded-xl p-3 bg-slate-50">
+                        <h4 class="font-bold text-sm text-slate-700 mb-2">รหัสผ่านสำหรับเจ้าหน้าที่ทั่วไป</h4>
+                        <div class="flex space-x-2">
+                            <input type="text" id="setting-simple-pwd" class="flex-1 border p-2 rounded-xl text-xs" placeholder="กำลังโหลด...">
+                            <button onclick="saveSimplePwd()" class="bg-[#D97706] text-white px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-[#B45309]">บันทึก</button>
+                        </div>
+                    </div>
+                    <div class="border rounded-xl p-3 bg-slate-50">
+                        <h4 class="font-bold text-sm text-slate-700 mb-2">เพิ่มผู้ใช้งานระบุตัวตน / Admin</h4>
+                        <div class="flex flex-col space-y-2">
+                            <input type="text" id="setting-new-user" class="border p-2 rounded-xl text-xs" placeholder="Username">
+                            <input type="password" id="setting-new-pwd" class="border p-2 rounded-xl text-xs" placeholder="Password">
+                            <select id="setting-new-role" class="border p-2 rounded-xl text-xs">
+                                <option value="Identified">เจ้าหน้าที่ระบุตัวตน</option>
+                                <option value="Admin">ผู้ดูแลระบบ (Admin)</option>
+                            </select>
+                            <button onclick="saveNewUser()" class="bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-bold hover:bg-emerald-800">เพิ่มผู้ใช้งาน</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-100 text-slate-700 font-bold text-[11px]">
+                            <tr>
+                                <th class="p-3 border-b">Username</th>
+                                <th class="p-3 border-b">Password</th>
+                                <th class="p-3 border-b">สิทธิ์ (Role)</th>
+                                <th class="p-3 border-b text-center">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-manage-list" class="divide-y divide-slate-100">
+                            <tr><td colspan="4" class="p-4 text-center text-slate-400">กำลังโหลดข้อมูลผู้ใช้...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    <!-- Modals ทั้งหมด -->
+    
+    <div id="kpiAdminModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-5 shadow-2xl border border-slate-200">
+            <div class="flex justify-between items-center mb-3 pb-1.5 border-b-2 border-slate-200">
+                <h3 class="font-bold text-base text-slate-800"><i class="fa-solid fa-plus text-violet-800 mr-2"></i>เพิ่มตัวชี้วัดใหม่ (Admin)</h3>
+                <button onclick="toggleModal('kpiAdminModal', false)" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="space-y-2">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 mb-0.5">กลุ่มโรค / สาขาสำคัญ</label>
+                    <input type="text" id="add-kpi-group" class="w-full border p-1.5 rounded-xl text-xs" placeholder="เช่น Stroke, STEMI">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 mb-0.5">ชื่อตัวชี้วัด</label>
+                    <input type="text" id="add-kpi-title" class="w-full border p-1.5 rounded-xl text-xs" placeholder="ระบุชื่อตัวชี้วัด...">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 mb-0.5">ผู้รับผิดชอบ</label>
+                    <input type="text" id="add-kpi-resp" class="w-full border p-1.5 rounded-xl text-xs" placeholder="ชื่อผู้รับผิดชอบ...">
+                </div>
+                <button onclick="preCheckKpiSave()" class="w-full bg-[#D97706] hover:bg-[#B45309] text-white py-2 rounded-xl font-bold text-xs mt-2 shadow transition">
+                    <i class="fa-solid fa-floppy-disk mr-1"></i>สร้างตัวชี้วัด (ไปกรอกข้อมูลต่อในแท็บจัดการ)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- กล่องลบข้อมูลบอร์ดข่าว -->
+    <div id="deletePasswordModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm hidden flex items-center justify-center p-4 z-[60]">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-rose-300 animate-in fade-in zoom-in-95 duration-150">
+            <div class="text-center mb-3">
+                <div class="circle-icon bg-rose-100 text-rose-600 text-xl mx-auto mb-2 border border-rose-200" style="width:60px; height:60px;">
+                    <i class="fa-solid fa-trash-can"></i>
+                </div>
+                <h3 class="font-bold text-base text-slate-800">ยืนยันสิทธิ์การลบข้อมูล</h3>
+                <p class="text-[11px] text-slate-500 font-medium mt-0.5">ระบุรหัสผ่านผู้ดูแลระบบ (Admin) เพื่ออนุมัติลบข้อมูล</p>
+            </div>
+            <input type="password" id="delete-password-input" class="w-full text-center border border-slate-200 p-2 rounded-xl mb-3 focus:border-rose-600 focus:outline-none tracking-widest text-base font-bold bg-rose-50/50" placeholder="••••••••">
+            <div class="flex space-x-2">
+                <button onclick="toggleModal('deletePasswordModal', false)" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-xl font-bold text-xs transition">ยกเลิก</button>
+                <button onclick="verifyDeletePassword()" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white py-2 rounded-xl font-bold text-xs shadow-md transition">ยืนยันลบข้อมูล</button>
+            </div>
+        </div>
+    </div>
+
+    
+    <div id="unifiedLoginModal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm hidden flex items-center justify-center p-4 z-[80]">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-200">
+            <div class="text-center mb-4">
+                <div class="circle-icon bg-violet-100 text-violet-700 text-xl mx-auto mb-2" style="width:60px; height:60px;">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h3 class="font-bold text-base text-slate-800" id="login-modal-title">ยืนยันสิทธิ์เข้าใช้งาน</h3>
+                <p class="text-[11px] text-slate-500 mt-0.5" id="login-modal-desc">กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ</p>
+            </div>
+            
+            <!-- Tabs for Login Type -->
+            <div class="flex border-b mb-4">
+                <button id="login-tab-simple" onclick="toggleLoginType('simple')" class="flex-1 py-2 text-xs font-bold border-b-2 border-violet-600 text-violet-700">รหัสผ่านทั่วไป</button>
+                <button id="login-tab-user" onclick="toggleLoginType('user')" class="flex-1 py-2 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600">บัญชีผู้ใช้</button>
+            </div>
+
+            <!-- Simple Password Section -->
+            <div id="login-section-simple" class="space-y-3">
+                <input type="password" id="login-simple-pwd" class="w-full text-center border border-slate-200 p-2 rounded-xl focus:border-violet-600 focus:outline-none tracking-widest text-base font-bold bg-slate-50" placeholder="รหัสผ่านทั่วไป">
+                <button onclick="submitSimpleLogin()" id="btn-simple-login" class="w-full bg-[#D97706] hover:bg-[#B45309] text-white py-2 rounded-xl font-bold text-xs shadow transition">เข้าสู่ระบบ</button>
+            </div>
+
+            <!-- Username/Password Section -->
+            <div id="login-section-user" class="space-y-3 hidden">
+                <input type="text" id="login-username" class="w-full border border-slate-200 p-2 rounded-xl focus:border-violet-600 focus:outline-none text-xs font-bold bg-slate-50" placeholder="Username">
+                <input type="password" id="login-user-pwd" class="w-full border border-slate-200 p-2 rounded-xl focus:border-violet-600 focus:outline-none text-xs font-bold bg-slate-50" placeholder="Password">
+                <button onclick="submitUserLogin()" id="btn-user-login" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-2 rounded-xl font-bold text-xs shadow transition">เข้าสู่ระบบด้วยบัญชี</button>
+            </div>
+            
+            <button onclick="cancelLogin()" class="w-full mt-2 bg-slate-100 hover:bg-slate-200 text-slate-600 py-1.5 rounded-xl font-bold text-[10px] transition">ยกเลิก</button>
+        </div>
+    </div>
+<div id="adminModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-3 pb-1.5 border-b-2 border-slate-200">
+                <h3 class="font-bold text-base text-slate-800"><i class="fa-solid fa-toolbox text-slate-700 mr-2"></i>แผงบันทึกข้อมูลแนวทาง / ประกาศ</h3>
+                <button onclick="toggleModal('adminModal', false)" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="space-y-3 mb-2">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-0.5">กรุณาเลือกหมวดหมู่ที่ต้องการอัปโหลด</label>
+                    <select id="admin-entry-mode" onchange="toggleAdminFormFields()" class="w-full border border-slate-200 p-2 rounded-xl font-bold text-xs focus:outline-none focus:border-violet-900 bg-amber-50">
+                        <option value="news">1. หมวดประกาศข่าวสาร</option>
+                        <option value="cpg">2. หมวดหมู่ความรู้ CPG</option>
+                    </select>
+                </div>
+                <div id="wrapper-news-type">
+                    <label class="block text-[11px] font-bold text-slate-500 mb-0.5">เลือกประเภทข่าวสาร</label>
+                    <div class="flex space-x-2">
+                        <select id="news-type-select" class="flex-1 border border-slate-200 p-1.5 rounded-xl focus:outline-none focus:border-violet-900 text-xs font-bold text-slate-700"></select>
+                        <button type="button" onclick="addNewConfigPrompt('type')" class="bg-violet-800 hover:bg-violet-900 text-white px-2.5 rounded-xl text-xs font-bold"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                </div>
+                <div id="wrapper-cpg-dept" class="hidden">
+                    <label class="block text-[11px] font-bold text-slate-500 mb-0.5">เลือกแผนกงานทางการแพทย์ประจำไฟล์ CPG</label>
+                    <div class="flex space-x-2">
+                        <select id="cpg-dept-select" class="flex-1 border border-slate-200 p-1.5 rounded-xl focus:outline-none focus:border-pink-900 text-xs font-bold text-slate-700"></select>
+                        <button type="button" onclick="addNewConfigPrompt('dept')" class="bg-pink-900 hover:bg-pink-950 text-white px-2.5 rounded-xl text-xs font-bold"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 mb-0.5" id="label-title">หัวข้อประกาศ / เรื่อง</label>
+                    <input type="text" id="news-title" class="w-full border border-slate-200 p-2 rounded-xl focus:outline-none focus:border-violet-900 text-xs font-medium" placeholder="ระบุหัวข้อหัวเรื่องตรงนี้...">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 mb-0.5">รายละเอียด / เนื้อหาสรุป</label>
+                    <textarea id="news-content" rows="3" class="w-full border border-slate-200 p-2 rounded-xl focus:outline-none focus:border-violet-900 text-xs font-medium" placeholder="พิมพ์คำชี้แจงสาระสำคัญโดยย่อ..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 mb-0.5">ลิงก์แนบเอกสาร (Google Drive / Slide / Docs / PDF)</label>
+                    <input type="text" id="news-link" class="w-full border border-slate-200 p-2 rounded-xl focus:outline-none focus:border-violet-900 text-xs font-medium" placeholder="https://drive.google.com/...">
+                </div>
+                <button onclick="preCheckAdminSave()" class="w-full bg-[#D97706] hover:bg-[#B45309] text-white py-2.5 rounded-xl font-bold text-xs transition shadow-md mt-2">
+                    <i class="fa-solid fa-cloud-arrow-up mr-1.5"></i>บันทึกและส่งข้อมูลขึ้นคลังโรงพยาบาล
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="errorModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm hidden flex items-center justify-center p-4 z-[100]">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-rose-500 animate-in fade-in zoom-in-95 duration-150">
+            <div class="text-center mb-3">
+                <div class="circle-icon bg-rose-100 text-rose-600 text-2xl mx-auto mb-2" style="width:60px; height:60px;">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                </div>
+                <h3 class="font-bold text-base text-rose-700" id="error-title">แจ้งเตือน</h3>
+                <p class="text-xs text-slate-600 font-medium mt-1.5" id="error-msg">ข้อความเตือน</p>
+            </div>
+            <button onclick="toggleModal('errorModal', false)" class="w-full bg-rose-600 hover:bg-rose-700 text-white py-2 rounded-xl font-bold text-xs shadow-md transition">ตกลง</button>
+        </div>
+    </div>
+
+    <div id="successModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm hidden flex items-center justify-center p-4 z-[100]">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-emerald-500 animate-in fade-in zoom-in-95 duration-150">
+            <div class="text-center mb-3">
+                <div class="circle-icon bg-emerald-100 text-emerald-600 text-2xl mx-auto mb-2" style="width:60px; height:60px;">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <h3 class="font-bold text-base text-emerald-700" id="success-title">สำเร็จ</h3>
+                <p class="text-xs text-slate-600 font-medium mt-1.5" id="success-msg">ข้อความสำเร็จ</p>
+            </div>
+            <button onclick="toggleModal('successModal', false)" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-xl font-bold text-xs shadow-md transition">ตกลง</button>
+        </div>
+    </div>
+
+    <script>
+        
+        
+        let allNewsItems = []; 
+        let allKpiItems = [];
+        let adminActionTarget = ""; 
+        let itemToDeleteId = null;
+        let activeKpiChart = null; 
+        
+        let openGroupResult = "";
+        let openGroupManage = "";
+
+        // ตัวแปรเก็บสถานะการยืนยันตัวตน
+        let currentUserRole = "Guest";
+        let pendingTab = "";
+        let activeKpiSub = "";
+        let pendingKpiSub = "";
+
+
+        function switchTab(tabName) {
+            let allowed = false;
+            if (tabName === 'apps' || tabName === 'kpi-result') {
+                allowed = true;
+            } else if (tabName === 'kpi-admin') {
+                if (['General', 'Identified', 'Admin'].includes(currentUserRole)) allowed = true;
+            } else if (tabName === 'settings') {
+                if (currentUserRole === 'Admin') allowed = true;
+            }
+
+            if (!allowed) {
+                pendingTab = tabName;
+                openUnifiedLogin(tabName);
+                return;
+            }
+
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('section-' + tabName).classList.remove('hidden');
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'text-[#3B0764]', 'shadow-sm');
+                btn.classList.add('text-white/80', 'hover:bg-white/10');
+            });
+            const activeBtn = document.getElementById('tab-' + tabName);
+            if(activeBtn) {
+                activeBtn.classList.remove('text-white/80', 'hover:bg-white/10');
+                activeBtn.classList.add('bg-white', 'text-[#3B0764]', 'shadow-sm');
+            }
+
+            if(tabName.startsWith('kpi')) {
+                if(allKpiItems.length === 0) loadKpiSystem();
+                else if(tabName === 'kpi-result') renderKpiResultAccordion();
+
+                if(tabName === 'kpi-admin') {
+                    const defaultSub = ['Identified', 'Admin'].includes(currentUserRole) ? 'manage' : 'track';
+                    switchKpiSub(activeKpiSub || defaultSub);
+                }
+            } else if (tabName === 'settings') {
+                loadAdminSettings();
+            }
+        }
+
+        // สลับมุมมองย่อยภายในแท็บ "จัดการ/ติดตาม KPI" — มุมมอง "จัดการข้อมูล" ต้องใช้บัญชีผู้ใช้ (Identified/Admin) ส่วน "ติดตามสถานะ" เข้าได้ทุกบัญชีที่ล็อกอินแล้ว
+        function switchKpiSub(subName) {
+            if (subName === 'manage' && !['Identified', 'Admin'].includes(currentUserRole)) {
+                pendingKpiSub = 'manage';
+                openUnifiedLogin('kpi-manage');
+                return;
+            }
+
+            activeKpiSub = subName;
+            document.getElementById('section-kpi-manage').classList.toggle('hidden', subName !== 'manage');
+            document.getElementById('section-kpi-track').classList.toggle('hidden', subName !== 'track');
+
+            const btnManage = document.getElementById('subtab-kpi-manage');
+            const btnTrack = document.getElementById('subtab-kpi-track');
+            const activeCls = ['bg-violet-600', 'text-white', 'shadow-sm'];
+            const inactiveCls = ['bg-slate-100', 'text-slate-600', 'hover:bg-slate-200'];
+            btnManage.classList.remove(...activeCls, ...inactiveCls);
+            btnTrack.classList.remove(...activeCls, ...inactiveCls);
+            btnManage.classList.add(...(subName === 'manage' ? activeCls : inactiveCls));
+            btnTrack.classList.add(...(subName === 'track' ? activeCls : inactiveCls));
+
+            if (subName === 'manage') renderKpiManageAccordion();
+            if (subName === 'track') renderKpiTrackTable();
+        }
+
+
+        function toggleModal(modalId, show) {
+            const m = document.getElementById(modalId);
+            if(!m) return;
+            if (show) {
+                m.classList.remove('hidden');
+            } else {
+                m.classList.add('hidden');
+                if(modalId === 'passwordModal') document.getElementById('app-password').value = "";
+                if(modalId === 'adminPasswordModal') document.getElementById('admin-password-input').value = "";
+                if(modalId === 'deletePasswordModal') document.getElementById('delete-password-input').value = "";
+            }
+        }
+
+        function showError(msg, title = 'แจ้งเตือนข้อผิดพลาด') {
+            document.getElementById('error-title').innerText = title;
+            document.getElementById('error-msg').innerText = msg;
+            toggleModal('errorModal', true);
+        }
+
+        function showSuccess(msg, title = 'ดำเนินการสำเร็จ') {
+            document.getElementById('success-title').innerText = title;
+            document.getElementById('success-msg').innerText = msg;
+            toggleModal('successModal', true);
+        }
+
+        function openAppSecurity(url) {
+            window.open(url, '_blank');
+        }
+
+
+        
+        function openAdminSecurity(targetMode) {
+            adminActionTarget = targetMode;
+            if (currentUserRole === 'Admin' || (targetMode === 'save' && ['Identified', 'Admin'].includes(currentUserRole))) {
+                proceedAdminAction();
+            } else {
+                openUnifiedLogin('admin_action', targetMode);
+            }
+        }
+
+        function proceedAdminAction() {
+            if (adminActionTarget === 'open') {
+                toggleModal('adminModal', true);
+            } else if (adminActionTarget === 'save') {
+                executeAddNews();
+            } else if (adminActionTarget === 'kpi_admin') {
+                toggleModal('kpiAdminModal', true);
+            }
+        }
+
+        function openUnifiedLogin(context, targetMode = null) {
+            document.getElementById('login-modal-title').innerText = "ยืนยันสิทธิ์เข้าใช้งาน";
+            
+            if (context === 'kpi-track' || context === 'kpi-admin') {
+                document.getElementById('login-modal-desc').innerText = "เข้าสู่ระบบ (รหัสผ่านทั่วไป หรือ บัญชีผู้ใช้)";
+                toggleLoginType('simple');
+            } else if (context === 'kpi-manage') {
+                document.getElementById('login-modal-desc').innerText = "กรุณาเข้าสู่ระบบด้วย บัญชีผู้ใช้";
+                toggleLoginType('user');
+            } else if (context === 'admin_action' || context === 'delete_action') {
+                document.getElementById('login-modal-desc').innerText = "การดำเนินการนี้ต้องใช้บัญชีที่มีสิทธิ์จัดการ";
+                toggleLoginType('user');
+            } else {
+                toggleLoginType('simple');
+            }
+
+            toggleModal('unifiedLoginModal', true);
+        }
+
+        function toggleLoginType(type) {
+            const btnSimple = document.getElementById('login-tab-simple');
+            const btnUser = document.getElementById('login-tab-user');
+            const secSimple = document.getElementById('login-section-simple');
+            const secUser = document.getElementById('login-section-user');
+
+            if (type === 'simple') {
+                btnSimple.className = "flex-1 py-2 text-xs font-bold border-b-2 border-violet-600 text-violet-700";
+                btnUser.className = "flex-1 py-2 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600";
+                secSimple.classList.remove('hidden');
+                secUser.classList.add('hidden');
+            } else {
+                btnUser.className = "flex-1 py-2 text-xs font-bold border-b-2 border-violet-600 text-violet-700";
+                btnSimple.className = "flex-1 py-2 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600";
+                secUser.classList.remove('hidden');
+                secSimple.classList.add('hidden');
+            }
+        }
+
+        function cancelLogin() {
+            toggleModal('unifiedLoginModal', false);
+            pendingTab = "";
+            pendingKpiSub = "";
+            adminActionTarget = "";
+        }
+
+        function submitSimpleLogin() {
+            const pwd = document.getElementById('login-simple-pwd').value;
+            const btn = document.getElementById('btn-simple-login');
+            btn.innerText = "กำลังตรวจสอบ...";
+            btn.disabled = true;
+
+            google.script.run.withSuccessHandler(function(isValid) {
+                btn.innerText = "เข้าสู่ระบบ";
+                btn.disabled = false;
+                if (isValid) {
+                    currentUserRole = "General";
+                    loginSuccess();
+                } else {
+                    showError("รหัสผ่านทั่วไปไม่ถูกต้อง");
+                }
+            }).verifySimpleLogin(pwd);
+        }
+
+        function submitUserLogin() {
+            const user = document.getElementById('login-username').value;
+            const pwd = document.getElementById('login-user-pwd').value;
+            const btn = document.getElementById('btn-user-login');
+            btn.innerText = "กำลังตรวจสอบ...";
+            btn.disabled = true;
+
+            google.script.run.withSuccessHandler(function(role) {
+                btn.innerText = "เข้าสู่ระบบด้วยบัญชี";
+                btn.disabled = false;
+                if (role) {
+                    currentUserRole = role; 
+                    loginSuccess();
+                } else {
+                    showError("Username หรือ Password ไม่ถูกต้อง");
+                }
+            }).verifyUserLogin(user, pwd);
+        }
+
+        function loginSuccess() {
+            toggleModal('unifiedLoginModal', false);
+            document.getElementById('login-simple-pwd').value = "";
+            document.getElementById('login-username').value = "";
+            document.getElementById('login-user-pwd').value = "";
+            
+            if (currentUserRole === 'Admin') {
+                document.getElementById('btn-settings-header').classList.remove('hidden');
+            }
+
+            if (pendingTab) {
+                switchTab(pendingTab);
+                pendingTab = "";
+            } else if (pendingKpiSub) {
+                switchKpiSub(pendingKpiSub);
+                pendingKpiSub = "";
+            } else if (adminActionTarget) {
+                proceedAdminAction();
+            } else if (itemToDeleteId) {
+                proceedDelete();
+            }
+        }
+        
+        function openDeleteSecurity(id) {
+            itemToDeleteId = id;
+            if (currentUserRole === 'Admin') {
+                proceedDelete();
+            } else {
+                openUnifiedLogin('delete_action');
+            }
+        }
+        
+        function proceedDelete() {
+            if(confirm("ยืนยันการลบข้อมูลนี้หรือไม่?")) {
+                document.getElementById('news-sub-list').innerHTML = '<p class="text-center text-slate-400 py-3 text-xs animate-pulse">กำลังลบข้อมูล...</p>';
+                document.getElementById('cpg-sub-list').innerHTML = '<p class="text-center text-slate-400 py-3 text-xs animate-pulse">กำลังลบข้อมูล...</p>';
+                google.script.run.withSuccessHandler(function(updatedNews) {
+                    allNewsItems = updatedNews;
+                    filterData();
+                    showSuccess('ลบข้อมูลออกจากระบบคลังข้อมูลเรียบร้อยแล้ว');
+                    itemToDeleteId = null;
+                }).deleteNews(itemToDeleteId);
+            } else {
+                itemToDeleteId = null;
+            }
+        }
+        
+        // --- Admin Settings Logic ---
+        function loadAdminSettings() {
+            document.getElementById('users-manage-list').innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-400">กำลังโหลด...</td></tr>';
+            google.script.run.withSuccessHandler(function(pwd) {
+                document.getElementById('setting-simple-pwd').value = pwd;
+            }).getSimplePassword();
+            
+            google.script.run.withSuccessHandler(renderUsersList).getUsersList();
+        }
+        
+        function renderUsersList(users) {
+            const tbody = document.getElementById('users-manage-list');
+            if(users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-400">ไม่มีผู้ใช้งานระบุตัวตน</td></tr>';
+                return;
+            }
+            let html = '';
+            users.forEach(u => {
+                html += `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-3 border-b text-slate-800 font-medium">${u.username}</td>
+                    <td class="p-3 border-b text-slate-500 font-mono text-[10px]">${u.password}</td>
+                    <td class="p-3 border-b">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${u.role==='Admin' ? 'bg-rose-100 text-rose-700' : 'bg-indigo-100 text-indigo-700'}">${u.role}</span>
+                    </td>
+                    <td class="p-3 border-b text-center space-x-1">
+                        <button onclick="deleteUser('${u.id}')" class="text-slate-400 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-full transition"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+        
+        function saveSimplePwd() {
+            const pwd = document.getElementById('setting-simple-pwd').value;
+            if(!pwd) return;
+            google.script.run.withSuccessHandler(function(res) {
+                if(res) showSuccess("อัปเดตรหัสผ่านทั่วไปสำเร็จ");
+            }).updateSimplePassword(pwd);
+        }
+        
+        function saveNewUser() {
+            const u = document.getElementById('setting-new-user').value;
+            const p = document.getElementById('setting-new-pwd').value;
+            const r = document.getElementById('setting-new-role').value;
+            if(!u || !p) {
+                showError("กรุณากรอก Username และ Password"); return;
+            }
+            document.getElementById('setting-new-user').value = "";
+            document.getElementById('setting-new-pwd').value = "";
+            google.script.run.withSuccessHandler(function(users) {
+                renderUsersList(users);
+                showSuccess("เพิ่มผู้ใช้งานสำเร็จ");
+            }).saveUser("", u, p, r);
+        }
+        
+        function deleteUser(id) {
+            if(confirm("ต้องการลบบัญชีผู้ใช้นี้หรือไม่?")) {
+                google.script.run.withSuccessHandler(renderUsersList).deleteUser(id);
+            }
+        }
+        
+
+
+        function toggleAdminFormFields() {
+            const mode = document.getElementById('admin-entry-mode').value;
+            const wrapperNews = document.getElementById('wrapper-news-type');
+            const wrapperCpg = document.getElementById('wrapper-cpg-dept');
+            const labelTitle = document.getElementById('label-title');
+            if (mode === 'news') {
+                wrapperNews.classList.remove('hidden');
+                wrapperCpg.classList.add('hidden');
+                labelTitle.innerText = "หัวข้อประกาศ / เรื่อง";
+            } else {
+                wrapperNews.classList.add('hidden');
+                wrapperCpg.classList.remove('hidden');
+                labelTitle.innerText = "ชื่อแนวทางเวชปฏิบัติเวชกรรม (CPG /คู่มือ)";
+            }
+        }
+
+        function updateConfigDropdowns(config) {
+            const filterNewsType = document.getElementById('filter-news-type');
+            const newsTypeSelect = document.getElementById('news-type-select');
+            const filterCpgDept = document.getElementById('filter-cpg-dept');
+            const cpgDeptSelect = document.getElementById('cpg-dept-select');
+
+            let typeFilterHtml = '<option value="ทั้งหมด">แสดงทุกประเภทข่าว</option>';
+            let typeFormHtml = '';
+            config.types.forEach(t => {
+                typeFilterHtml += `<option value="${t}">${t}</option>`;
+                typeFormHtml += `<option value="${t}">${t}</option>`;
+            });
+            filterNewsType.innerHTML = typeFilterHtml;
+            newsTypeSelect.innerHTML = typeFormHtml;
+
+            let deptFilterHtml = '<option value="ทั้งหมด">แสดงทุกแผนกงาน</option>';
+            let deptFormHtml = '';
+            config.depts.forEach(d => {
+                deptFilterHtml += `<option value="${d}">${d}</option>`;
+                deptFormHtml += `<option value="${d}">${d}</option>`;
+            });
+            filterCpgDept.innerHTML = deptFilterHtml;
+            cpgDeptSelect.innerHTML = deptFormHtml;
+        }
+
+        function addNewConfigPrompt(typeOrDept) {
+            const label = typeOrDept === 'type' ? 'หมวดข่าวสารประกาศใหม่' : 'ชื่อแผนกงานรักษาโรคใหม่';
+            const newValue = prompt(`กรุณากรอก [${label}] ที่ต้องการบันทึกเพิ่มในระบบ:`);
+            if (!newValue || newValue.trim() === '') return;
+            google.script.run.withSuccessHandler(function(updatedConfig) {
+                updateConfigDropdowns(updatedConfig);
+                showSuccess('ทำการบันทึกหมวดตัวเลือกเข้าสู่ระบบเรียบร้อยแล้ว');
+            }).addConfigItem(typeOrDept, newValue.trim());
+        }
+
+        function preCheckAdminSave() {
+            const title = document.getElementById('news-title').value.trim();
+            const content = document.getElementById('news-content').value.trim();
+            if (!title || !content) {
+                showError('กรุณากรอกหัวข้อประกาศหรือเนื้อหาหลักให้ครบถ้วนก่อนบันทึกครับ', 'ข้อมูลไม่ครบถ้วน');
+                return;
+            }
+            openAdminSecurity('save');
+        }
+
+        function executeAddNews() {
+            const mode = document.getElementById('admin-entry-mode').value;
+            const title = document.getElementById('news-title').value.trim();
+            const content = document.getElementById('news-content').value.trim();
+            const link = document.getElementById('news-link').value.trim();
+
+            let type = "";
+            let dept = "";
+            if (mode === "news") {
+                type = document.getElementById('news-type-select').value;
+                dept = "-"; 
+            } else {
+                type = "ความรู้/CPG";
+                dept = document.getElementById('cpg-dept-select').value;
+            }
+
+            document.getElementById('news-sub-list').innerHTML = `<p class="text-center text-slate-400 py-3 text-xs animate-pulse">กำลังซิงค์ข้อมูลกับระบบ...</p>`;
+            document.getElementById('cpg-sub-list').innerHTML = `<p class="text-center text-slate-400 py-3 text-xs animate-pulse">กำลังซิงค์ข้อมูลกับระบบ...</p>`;
+            toggleModal('adminModal', false);
+            
+            google.script.run.withSuccessHandler(function(updatedNews) {
+                allNewsItems = updatedNews;
+                filterData();
+                document.getElementById('news-title').value = "";
+                document.getElementById('news-content').value = "";
+                document.getElementById('news-link').value = "";
+                showSuccess('บันทึกประกาศและคลังแนวทาง CPG ลงระบบโรงพยาบาลสำเร็จแล้วครับ');
+            }).addNews(type, dept, title, content, link);
+        }
+
+
+        function filterData() {
+            const selectedType = document.getElementById('filter-news-type').value || 'ทั้งหมด';
+            const selectedDept = document.getElementById('filter-cpg-dept').value || 'ทั้งหมด';
+            renderSeparatedCards(allNewsItems, selectedType, selectedDept);
+        }
+
+        function renderSeparatedCards(newsList, filteredType, filteredDept) {
+            const newsContainer = document.getElementById('news-sub-list');
+            const cpgContainer = document.getElementById('cpg-sub-list');
+
+            newsContainer.innerHTML = "";
+            cpgContainer.innerHTML = "";
+
+            let newsCount = 0;
+            let cpgCount = 0;
+            newsList.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "p-3 border border-slate-200 rounded-2xl bg-white shadow-sm flex justify-between items-start hover:shadow transition text-xs w-full";
+                
+                const itemDept = item.dept ? item.dept.toString().trim() : '';
+                const itemType = item.type ? item.type.toString().trim() : '';
+
+                if (itemDept !== '' && itemDept !== '-') {
+                    if (filteredDept !== "ทั้งหมด" && itemDept !== filteredDept) return;
+
+                    card.innerHTML = `
+                        <div class="flex-1 min-w-0 pr-2">
+                            <div class="flex flex-wrap items-center gap-1.5 mb-1.5">
+                                <span class="text-[9px] font-bold bg-slate-200 text-slate-800 px-2 py-0.5 rounded-full">${item.date}</span>
+                                <span class="text-[9px] font-bold bg-pink-900 text-white px-2 py-0.5 rounded-full"><i class="fa-solid fa-stethoscope mr-1"></i>แผนก: ${itemDept}</span>
+                            </div>
+                            <h4 class="font-bold text-slate-900 text-xs mb-0.5 break-words">${item.title}</h4>
+                            <p class="text-slate-600 text-[11px] whitespace-pre-line leading-relaxed">${item.content}</p>
+                            ${item.link && item.link !== '#' && item.link !== '' ?
+                            `
+                                <a href="${item.link}" target="_blank" class="inline-flex items-center text-[11px] text-pink-900 font-bold mt-2 hover:underline">
+                                    <i class="fa-solid fa-file-pdf text-rose-600 mr-1 text-xs"></i>เปิดอ่านแนวทางเอกสาร CPG
+                                </a>
+                            ` : ''}
+                        </div>
+                        <button onclick="openDeleteSecurity('${item.id}')" class="text-slate-300 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-full transition" title="ลบข้อมูล">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    `;
+                    cpgContainer.appendChild(card);
+                    cpgCount++;
+                } else {
+                    if (filteredType !== "ทั้งหมด" && itemType !== filteredType) return;
+                    card.innerHTML = `
+                        <div class="flex-1 min-w-0 pr-2">
+                            <div class="flex flex-wrap items-center gap-1.5 mb-1.5">
+                                <span class="text-[9px] font-bold bg-slate-200 text-slate-800 px-2 py-0.5 rounded-full">${item.date}</span>
+                                <span class="text-[9px] font-bold bg-violet-900 text-white px-2 py-0.5 rounded-full"><i class="fa-solid fa-tag mr-1"></i>${itemType}</span>
+                            </div>
+                            <h4 class="font-bold text-slate-900 text-xs mb-0.5 break-words">${item.title}</h4>
+                            <p class="text-slate-600 text-[11px] whitespace-pre-line leading-relaxed">${item.content}</p>
+                            ${item.link && item.link !== '#' && item.link !== '' ?
+                            `
+                                <a href="${item.link}" target="_blank" class="inline-flex items-center text-[11px] text-violet-900 font-bold mt-2 hover:underline">
+                                    <i class="fa-solid fa-paperclip mr-1 text-xs"></i>ดูเอกสารหรือลิงก์ประชาสัมพันธ์
+                                </a>
+                            ` : ''}
+                        </div>
+                        <button onclick="openDeleteSecurity('${item.id}')" class="text-slate-300 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-full transition" title="ลบข้อมูล">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    `;
+                    newsContainer.appendChild(card);
+                    newsCount++;
+                }
+            });
+            if (newsCount === 0) newsContainer.innerHTML = `<p class="text-center text-slate-400 py-4 text-[11px] font-medium">ไม่มีรายการประกาศข่าวสารในหมวดนี้</p>`;
+            if (cpgCount === 0) cpgContainer.innerHTML = `<p class="text-center text-slate-400 py-4 text-[11px] font-medium">ไม่มีแนวทางเวชปฏิบัติ CPG ในหมวดนี้</p>`;
+        }
+
+        // ================= KPI System (Tab 3, 4, 5) =================
+
+        function loadKpiSystem() {
+            google.script.run.withSuccessHandler(function(list) {
+                allKpiItems = list;
+                renderKpiResultAccordion();
+                renderKpiManageAccordion();
+                renderKpiTrackTable();
+            }).getKpiData();
+        }
+
+        function getKpiGroups() {
+            const groups = {};
+            allKpiItems.forEach(item => {
+                if (!groups[item.group]) groups[item.group] = [];
+                groups[item.group].push(item);
+            });
+            return groups;
+        }
+
+        function renderKpiResultAccordion() {
+            const container = document.getElementById('kpi-result-accordion');
+            container.innerHTML = "";
+            const groups = getKpiGroups();
+
+            if (Object.keys(groups).length === 0) {
+                container.innerHTML = `<p class="text-center text-slate-400 text-xs py-4">ไม่มีข้อมูลตัวชี้วัดในระบบ</p>`;
+                return;
+            }
+
+            Object.keys(groups).forEach(groupName => {
+                const isOpened = (groupName === openGroupResult);
+                const wrapper = document.createElement('div');
+                wrapper.className = "border rounded-xl overflow-hidden bg-slate-50 mb-2";
+                
+                const btn = document.createElement('button');
+                btn.className = `w-full text-left p-2.5 flex justify-between font-bold text-xs transition ${isOpened ? 'bg-violet-600 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`;
+                btn.innerHTML = `<span><i class="fa-solid fa-folder-open mr-1.5 ${isOpened ? 'text-white' : 'text-violet-700'}"></i>${groupName}</span><i class="fa-solid ${isOpened ? 'fa-chevron-up' : 'fa-chevron-down'} text-[10px]"></i>`;
+                btn.onclick = () => { 
+                    openGroupResult = (openGroupResult === groupName) ? "" : groupName; 
+                    renderKpiResultAccordion(); 
+                };
+                
+                const list = document.createElement('div');
+                list.className = isOpened ? "block p-1 bg-white space-y-1" : "hidden";
+                groups[groupName].forEach(kpi => {
+                    const iBtn = document.createElement('button');
+                    iBtn.className = "w-full text-left p-2 text-[11px] rounded-lg hover:bg-slate-100 truncate border-b flex items-center transition text-slate-700 font-medium";
+                    iBtn.innerHTML = `<i class="fa-solid fa-chart-line mr-1.5 text-slate-400"></i>${kpi.title}`;
+                    iBtn.onclick = () => selectKpiResult(kpi);
+                    list.appendChild(iBtn);
+                });
+                wrapper.appendChild(btn); 
+                wrapper.appendChild(list); 
+                container.appendChild(wrapper);
+            });
+        }
+
+        function selectKpiResult(kpi) {
+            document.getElementById('kpi-empty-state').classList.add('hidden');
+            document.getElementById('kpi-content-data').classList.remove('hidden');
+            
+            document.getElementById('view-kpi-group').innerText = `กลุ่มโรค: ${kpi.group}`;
+            document.getElementById('view-kpi-title').innerText = kpi.title;
+            document.getElementById('view-kpi-target').innerText = kpi.target || '-';
+            document.getElementById('view-kpi-resp').innerText = kpi.responsible || '-';
+            document.getElementById('view-kpi-template').innerText = kpi.template || '-';
+            document.getElementById('view-kpi-source').innerText = kpi.source || '-';
+            document.getElementById('view-kpi-q1').innerText = kpi.q1 || '-';
+            document.getElementById('view-kpi-q2').innerText = kpi.q2 || '-';
+            document.getElementById('view-kpi-q3').innerText = kpi.q3 || '-';
+            document.getElementById('view-kpi-q4').innerText = kpi.q4 || '-';
+
+            const labels = ['ปี -4', 'ปี -3', 'ปี -2', 'ปี -1', 'ปีปัจจุบัน'];
+            const dataVals = [parseFloat(kpi.y4)||0, parseFloat(kpi.y3)||0, parseFloat(kpi.y2)||0, parseFloat(kpi.y1)||0, parseFloat(kpi.y0)||0];
+            
+            const targetMatch = kpi.target.match(/\d+(\.\d+)?/);
+            const targetNum = targetMatch ? parseFloat(targetMatch[0]) : null;
+
+            let annotationPluginConfig = { annotations: {} };
+            if (targetNum !== null) {
+                annotationPluginConfig.annotations.targetLine = {
+                    type: 'line', yMin: targetNum, yMax: targetNum,
+                    borderColor: 'rgba(225, 29, 72, 0.8)', borderWidth: 2, borderDash: [5, 5],
+                    label: { display: true, content: 'เป้าหมาย ' + kpi.target, position: 'start', backgroundColor: 'rgba(225, 29, 72, 0.9)', color: 'white', font: { size: 10, family: "'Google Sans', 'Noto Sans Thai', sans-serif", weight: 'bold' }, padding: 4 }
+                };
+            }
+
+            if (activeKpiChart) activeKpiChart.destroy();
+            activeKpiChart = new Chart(document.getElementById('kpiBarChart').getContext('2d'), {
+                type: 'bar', plugins: [ChartDataLabels],
+                data: { labels: labels, datasets: [{ label: 'ผลงาน', data: dataVals, backgroundColor: 'rgba(14, 165, 233, 0.85)', borderRadius: 6 }] },
+                options: { 
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'top', font: { weight: 'bold', size: 11, family: "'Google Sans', 'Noto Sans Thai', sans-serif" }, formatter: function(value) { return value !== 0 ? value : ''; } }, annotation: annotationPluginConfig },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        function renderKpiManageAccordion() {
+            const container = document.getElementById('kpi-manage-accordion');
+            container.innerHTML = "";
+            const groups = getKpiGroups();
+
+            if (Object.keys(groups).length === 0) {
+                container.innerHTML = `<p class="text-center text-slate-400 text-xs py-4">ไม่มีข้อมูลกลุ่มโรค</p>`;
+                return;
+            }
+
+            Object.keys(groups).forEach(groupName => {
+                const btn = document.createElement('button');
+                btn.className = `w-full text-left p-2.5 rounded-xl font-bold text-xs mb-2 transition ${openGroupManage === groupName ? 'bg-violet-600 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`;
+                btn.innerHTML = `<i class="fa-solid fa-folder mr-1.5"></i> กลุ่มโรค: ${groupName}`;
+                btn.onclick = () => { 
+                    openGroupManage = groupName; 
+                    renderKpiManageAccordion(); 
+                    renderKpiManageTable(); 
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function renderKpiManageTable() {
+            const container = document.getElementById('manage-table-container');
+            const title = document.getElementById('manage-table-title');
+            if(!openGroupManage) return;
+
+            title.innerHTML = `<i class="fa-solid fa-table mr-2 text-violet-600"></i>ตารางจัดการข้อมูล: <span class="text-violet-700">${openGroupManage}</span>`;
+            
+            let html = `
+            <table class="w-full text-left bg-white kpi-table">
+                <thead class="bg-violet-50 text-violet-900 font-bold text-[10px]">
+                    <tr>
+                        <th class="p-2 border sticky left-0 bg-violet-50 z-10" style="min-width: 250px;">ชื่อตัวชี้วัด</th>
+                        <th class="p-2 border">เป้าหมาย</th>
+                        <th class="p-2 border w-12 text-center">ปี-4</th><th class="p-2 border w-12 text-center">ปี-3</th>
+                        <th class="p-2 border w-12 text-center">ปี-2</th><th class="p-2 border w-12 text-center">ปี-1</th>
+                        <th class="p-2 border w-12 text-center">ปีปจบ.</th>
+                        <th class="p-2 border w-12 text-center">Q1</th><th class="p-2 border w-12 text-center">Q2</th>
+                        <th class="p-2 border w-12 text-center">Q3</th><th class="p-2 border w-12 text-center">Q4</th>
+                        <th class="p-2 border" style="min-width: 200px;">Template/นิยาม</th>
+                        <th class="p-2 border" style="min-width: 150px;">ที่มาข้อมูล</th>
+                        <th class="p-2 border">ผู้รับผิดชอบ</th>
+                        <th class="p-2 border text-center">บันทึก</th>
+                        <th class="p-2 border text-center">ลบ</th>
+                    </tr>
+                </thead>
+                <tbody class="text-slate-700">`;
+
+            const kpis = allKpiItems.filter(k => k.group === openGroupManage);
+            kpis.forEach(kpi => {
+                html += `
+                <tr class="border-b hover:bg-slate-50 transition" id="row-${kpi.id}">
+                    <td class="border p-1 sticky left-0 bg-white z-10"><textarea id="t-title-${kpi.id}" class="kpi-table-input font-semibold resize-none" rows="2" style="min-width: 250px;">${kpi.title||''}</textarea></td>
+                    <td class="border p-1"><input type="text" id="t-target-${kpi.id}" onchange="saveKpiInline('${kpi.id}')" class="kpi-table-input text-rose-600 font-bold" value="${kpi.target||''}"></td>
+                    <td class="border p-1"><input type="text" id="t-y4-${kpi.id}" onchange="saveKpiInline('${kpi.id}')" class="kpi-table-input text-center" value="${kpi.y4||''}"></td>
+                    <td class="border p-1"><input type="text" id="t-y3-${kpi.id}" onchange="saveKpiInline('${kpi.id}')" class="kpi-table-input text-center" value="${kpi.y3||''}"></td>
+                    <td class="border p-1"><input type="text" id="t-y2-${kpi.id}" onchange="saveKpiInline('${kpi.id}')" class="kpi-table-input text-center" value="${kpi.y2||''}"></td>
+                    <td class="border p-1"><input type="text" id="t-y1-${kpi.id}" onchange="saveKpiInline('${kpi.id}')" class="kpi-table-input text-center" value="${kpi.y1||''}"></td>
+                    <td class="border p-1"><input type="text" id="t-y0-${kpi.id}" onchange="saveKpiInline('${kpi.id}')" class="kpi-table-input text-center bg-green-50" value="${kpi.y0||''}"></td>
+                    <td class="border p-1"><input type="text" id="t-q1-${kpi.id}" onchange="saveKpiInline('${kpi.id}')" class="kpi-table-input text-center bg-yellow-50 text-blue-800 font-semibold" value="${kpi.q1||''}"></td>
+                    <td class="border p-1"><input type="text" id="t-q2-${kpi.id}" onchange="saveKpiInline('${kpi.id}')" class="kpi-table-input text-center bg-yellow-50 text-blue-800 font-semibold" value="${kpi.q2||''}"></td>
+                    <td class="border p-1"><input type="text" id="t-q3-${kpi.id}" onchange="saveKpiInline('${kpi.id}')" class="kpi-table-input text-center bg-yellow-50 text-blue-800 font-semibold" value="${kpi.q3||''}"></td>
+                    <td class="border p-1"><input type="text" id="t-q4-${kpi.id}" onchange="saveKpiInline('${kpi.id}')" class="kpi-table-input text-center bg-yellow-50 text-blue-800 font-semibold" value="${kpi.q4||''}"></td>
+                    <td class="border p-1"><textarea id="t-temp-${kpi.id}" class="kpi-table-input resize-none" rows="2">${kpi.template||''}</textarea></td>
+                    <td class="border p-1"><input type="text" id="t-src-${kpi.id}" class="kpi-table-input" value="${kpi.source||''}"></td>
+                    <td class="border p-1"><input type="text" id="t-resp-${kpi.id}" class="kpi-table-input text-violet-700 font-bold" value="${kpi.responsible||''}"></td>
+                    <td class="border p-1 text-center">
+                        <button onclick="saveKpiInline('${kpi.id}')" class="bg-[#D97706] hover:bg-[#B45309] text-white px-2 py-1 rounded-full text-[10px] font-bold shadow" title="บันทึกข้อมูลแถวนี้"><i class="fa-solid fa-save"></i></button>
+                    </td>
+                    <td class="border p-1 text-center">
+                        <button onclick="deleteKpiInline('${kpi.id}')" class="bg-rose-100 hover:bg-rose-200 text-rose-600 px-2 py-1 rounded-full text-[10px] font-bold shadow" title="ลบตัวชี้วัดนี้"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        function saveKpiInline(id) {
+            const btn = document.querySelector(`#row-${id} td:nth-last-child(2) button`);
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+            btn.classList.add('opacity-50');
+
+            const updatedKpi = {
+                id: id,
+                group: openGroupManage, 
+                title: document.getElementById(`t-title-${id}`).value,
+                responsible: document.getElementById(`t-resp-${id}`).value,
+                target: document.getElementById(`t-target-${id}`).value,
+                y4: document.getElementById(`t-y4-${id}`).value,
+                y3: document.getElementById(`t-y3-${id}`).value,
+                y2: document.getElementById(`t-y2-${id}`).value,
+                y1: document.getElementById(`t-y1-${id}`).value,
+                y0: document.getElementById(`t-y0-${id}`).value,
+                q1: document.getElementById(`t-q1-${id}`).value,
+                q2: document.getElementById(`t-q2-${id}`).value,
+                q3: document.getElementById(`t-q3-${id}`).value,
+                q4: document.getElementById(`t-q4-${id}`).value,
+                template: document.getElementById(`t-temp-${id}`).value,
+                source: document.getElementById(`t-src-${id}`).value
+            };
+
+            google.script.run.withSuccessHandler(function(list) {
+                allKpiItems = list;
+                btn.innerHTML = `<i class="fa-solid fa-check text-emerald-300"></i>`;
+                btn.classList.remove('opacity-50', 'bg-[#D97706]'); btn.classList.add('bg-slate-700');
+                setTimeout(() => { btn.innerHTML = `<i class="fa-solid fa-save"></i>`; btn.classList.remove('bg-slate-700'); btn.classList.add('bg-[#D97706]'); }, 2000);
+            }).updateKpiItem(updatedKpi);
+        }
+
+        function deleteKpiInline(id) {
+            if(confirm('คุณต้องการลบตัวชี้วัดนี้ใช่หรือไม่?')) {
+                const btn = document.querySelector(`#row-${id} td:last-child button`);
+                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+                
+                google.script.run.withSuccessHandler(function(list) {
+                    allKpiItems = list;
+                    renderKpiManageTable();
+                    renderKpiManageAccordion(); 
+                }).deleteKpiItem(id);
+            }
+        }
+
+        function preCheckKpiSave() {
+            const group = document.getElementById('add-kpi-group').value.trim();
+            const title = document.getElementById('add-kpi-title').value.trim();
+            if(!group || !title) return showError('กรุณากรอกข้อมูลกลุ่มโรคและชื่อตัวชี้วัดให้ครบถ้วนก่อนบันทึกครับ', 'ข้อมูลไม่ครบถ้วน');
+            
+            const obj = { group: group, title: title, target: '-', y4: '', y3: '', y2: '', y1: '', y0: '', q1: '', q2: '', q3: '', q4: '', template: '', source: '', responsible: document.getElementById('add-kpi-resp').value.trim() };
+            toggleModal('kpiAdminModal', false);
+            google.script.run.withSuccessHandler(list => { 
+                allKpiItems = list; 
+                openGroupManage = group; 
+                document.getElementById('add-kpi-group').value = "";
+                document.getElementById('add-kpi-title').value = "";
+                document.getElementById('add-kpi-resp').value = "";
+                switchTab('kpi-admin');
+                switchKpiSub('manage');
+                showSuccess('สร้างตัวชี้วัดสำเร็จ ระบบพาท่านมาที่หน้าจัดการเพื่อลงข้อมูลต่อได้เลยครับ');
+            }).addKpiItem(obj);
+        }
+
+        function renderKpiTrackTable() {
+            const term = document.getElementById('kpi-search-input').value.toLowerCase();
+            const container = document.getElementById('kpi-track-list');
+            container.innerHTML = "";
+
+            let filtered = allKpiItems;
+            if (term) {
+                filtered = allKpiItems.filter(k => 
+                    (k.title && k.title.toLowerCase().includes(term)) || 
+                    (k.group && k.group.toLowerCase().includes(term)) ||
+                    (k.responsible && k.responsible.toLowerCase().includes(term))
+                );
+            }
+
+            if(filtered.length === 0) {
+                container.innerHTML = `<tr><td colspan="5" class="text-center p-4 text-slate-400 text-xs">ไม่พบข้อมูลที่ค้นหา</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(kpi => {
+                let missing = [];
+                if(!kpi.target || kpi.target === '-' || kpi.target === '0') missing.push('เป้าหมาย');
+                if(!kpi.q1 || kpi.q1 === '-' || kpi.q1 === '') missing.push('Q1');
+                if(!kpi.q2 || kpi.q2 === '-' || kpi.q2 === '') missing.push('Q2');
+                if(!kpi.q3 || kpi.q3 === '-' || kpi.q3 === '') missing.push('Q3');
+                if(!kpi.q4 || kpi.q4 === '-' || kpi.q4 === '') missing.push('Q4');
+                if(!kpi.responsible || kpi.responsible === '-') missing.push('ผู้รับผิด');
+
+                const statHtml = missing.length > 0 
+                    ? `<span class="bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full text-[10px] font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>ขาด: ${missing.join(', ')}</span>`
+                    : `<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-[10px] font-bold"><i class="fa-solid fa-check mr-1"></i>สมบูรณ์</span>`;
+
+                container.innerHTML += `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-3 border-b text-slate-800 font-bold">${kpi.group}</td>
+                    <td class="p-3 border-b text-slate-600">${kpi.title}</td>
+                    <td class="p-3 border-b text-violet-700 font-semibold">${kpi.responsible || '-'}</td>
+                    <td class="p-3 border-b">${statHtml}</td>
+                    <td class="p-3 border-b text-center">
+                        <button onclick="jumpToManage('${kpi.group}')" class="bg-slate-800 hover:bg-slate-900 text-white px-3 py-1.5 rounded-full text-[10px] font-bold shadow transition"><i class="fa-solid fa-pen-to-square mr-1"></i>แก้ไข</button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        function jumpToManage(group) {
+            openGroupManage = group;
+            switchKpiSub('manage');
+        }
+
+        // ================= Init Application =================
+        function initAppData() {
+            google.script.run.withSuccessHandler(function(config) {
+                updateConfigDropdowns(config);
+                
+                google.script.run.withSuccessHandler(function(newsList) {
+                    allNewsItems = newsList;
+                    filterData(); 
+                }).getNews();
+                
+            }).getConfig();
+        }
+
+        window.onload = function() {
+            Chart.register(ChartDataLabels);
+            Chart.defaults.font.family = "'Google Sans', 'Noto Sans Thai', sans-serif";
+            
+            // ให้โหลดข้อมูลเบื้องต้นสำหรับแท็บระบบงานและข่าวสารทันที
+            initAppData();
+        };
+    </script>
+</body>
+</html>
