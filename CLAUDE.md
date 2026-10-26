@@ -4,3 +4,9 @@
 - After every code change, deploy immediately: `./deploy.sh "short description of the change"`.
   This runs `clasp push` and redeploys the existing web app deployment, so the `/exec` URL never changes.
 - If clasp is not logged in (new session), run `clasp login --no-localhost` and ask the user to open the URL and paste back the redirected `localhost:8888` URL.
+
+## ข้อกำหนดสำคัญในการทำงาน (Strict Rules)
+- ปฏิบัติตามคำสั่งให้ครบถ้วนทุกข้อ
+- ห้ามดำเนินการหรือเขียนโค้ดนอกเหนือจากที่สั่งโดยเด็ดขาด
+- ตรวจสอบความถูกต้องของงานทุกครั้งก่อนตอบกลับ
+- หากมีจุดไหนที่ไม่เข้าใจ ข้อมูลไม่พอ หรือไม่ชัดเจน ให้สอบถามก่อนเสมอ ห้ามคาดเดาเอาเอง
